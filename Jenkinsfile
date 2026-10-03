@@ -1,0 +1,67 @@
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Checking out code from GitHub...'
+
+                git branch: 'main',
+                    url: 'https://github.com/Prajakta-Dangat/nodejs-demo-app.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing Node.js dependencies...'
+
+                bat 'npm install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+
+                bat 'npm test'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+
+                bat 'docker build -t nodejs-demo-app .'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+
+                bat 'docker stop nodejs-demo-container || exit /b 0'
+                bat 'docker rm nodejs-demo-container || exit /b 0'
+                bat 'docker run -d -p 3000:3000 --name nodejs-demo-container nodejs-demo-app'
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo '======================================'
+            echo 'CI/CD PIPELINE COMPLETED SUCCESSFULLY!'
+            echo 'Application: http://localhost:3000'
+            echo '======================================'
+        }
+
+        failure {
+            echo '======================================'
+            echo 'CI/CD PIPELINE FAILED!'
+            echo 'Check the Console Output for errors.'
+            echo '======================================'
+        }
+    }
+}
